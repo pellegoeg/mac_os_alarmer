@@ -39,10 +39,9 @@ cat <<EOF > "$PLIST_PATH"
         <string>${PROJECT_DIR}/.venv/bin/python</string>
         <string>${PROJECT_DIR}/main.py</string>
     </array>
-    <key>StartInterval</key>
-    <!-- Kør hvert 30. minut (1800 sekunder) -->
     <key>RunAtLoad</key>
     <true/>
+    <key>StartInterval</key>
     <integer>1800</integer>
     <key>StandardOutPath</key>
     <string>${HOME}/Library/Logs/${PLIST_LABEL}.stdout.log</string>
@@ -67,4 +66,3 @@ echo "Programmet vil nu køre automatisk ved login og derefter hvert 30. minut."
 echo "Du kan ændre intervallet i: $PLIST_PATH"
 echo "Logfiler findes i: ~/Library/Logs/"
 echo "Brug 'launchctl unload $PLIST_PATH' for at deaktivere agenten."
-EOF
