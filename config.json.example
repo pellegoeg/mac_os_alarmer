@@ -1,0 +1,25 @@
+{
+  "notifier": {
+    "type": "mac",
+    "sound_name": "Glass",
+    "teams_webhook_url": ""
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "openstack",
+    "user": "postgres",
+    "password": ""
+  },
+  "checks": [
+    {
+      "name": "Base Tables Last Extracted",
+      "type": "postgresql",
+      "query": "SELECT extract(days from NOW()-extracted_at) as dage_siden FROM openstack.assert_base_tables_last_extracted_at order by extracted_at DESC LIMIT 1",
+      "threshold": 0.0,
+      "operator": ">",
+      "alert_title": "Data Extraction Forsinket",
+      "alert_message": "Der er gået {value} dage siden sidste base table extraction (grænse: {threshold} dag)."
+    }
+  ]
+}
