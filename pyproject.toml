@@ -1,0 +1,15 @@
+[project]
+name = "mac_os_alarmer"
+version = "0.1.0"
+description = "Script til at lave alarmer på mac os x"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "psycopg2-binary>=2.9.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

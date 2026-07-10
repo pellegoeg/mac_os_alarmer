@@ -10,14 +10,14 @@ echo "Projektmappe: $PROJECT_DIR"
 
 # 1. Opret virtuelt miljø hvis det ikke findes
 if [ ! -d "$PROJECT_DIR/.venv" ]; then
-    echo "Opretter virtuelt Python miljø (.venv)..."
-    python3 -m venv "$PROJECT_DIR/.venv"
+    echo "Opretter virtuelt Python miljø (.venv) med uv..."
+    uv venv "$PROJECT_DIR/.venv"
 fi
 
 # 2. Installer afhængigheder
-echo "Installerer afhængigheder fra requirements.txt..."
-"$PROJECT_DIR/.venv/bin/pip" install --upgrade pip
-"$PROJECT_DIR/.venv/bin/pip" install -r "$PROJECT_DIR/requirements.txt"
+echo "Installerer afhængigheder med uv..."
+uv pip install -r "$PROJECT_DIR/requirements.txt"
+
 
 # 3. Opret config.json hvis den ikke findes
 if [ ! -f "$PROJECT_DIR/config.json" ]; then
