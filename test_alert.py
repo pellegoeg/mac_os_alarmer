@@ -1,6 +1,5 @@
 import logging
 from notifiers import MacNotifier
-from checks import CheckResult, BaseCheck
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

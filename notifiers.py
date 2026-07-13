@@ -12,17 +12,22 @@ class BaseNotifier(abc.ABC):
         pass
 
 class MacNotifier(BaseNotifier):
-    def __init__(self, sound_name: str = "Glass"):
+    def __init__(self, sound_name: str = "Glass", timeout: int = 0):
         self.sound_name = sound_name
+        self.timeout = timeout
 
     def notify(self, title: str, message: str) -> None:
         # Escape double quotes for AppleScript string syntax
         escaped_title = title.replace('"', '\\"')
         escaped_message = message.replace('"', '\\"')
         
-        script = f'display notification "{escaped_message}" with title "{escaped_title}"'
-        if self.sound_name:
-            script += f' sound name "{self.sound_name}"'
+        if self.timeout > 0:
+            script = f'display dialog "{escaped_message}" with title "{escaped_title}"'
+            script += f' giving up after {self.timeout}'
+        else:
+            script = f'display notification "{escaped_message}" with title "{escaped_title}"'
+            if self.sound_name:
+                script += f' sound name "{self.sound_name}"'
             
         cmd = ["osascript", "-e", script]
         try:

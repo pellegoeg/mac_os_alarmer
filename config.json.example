@@ -2,6 +2,7 @@
   "notifier": {
     "type": "mac",
     "sound_name": "Glass",
+    "timeout": 10,
     "teams_webhook_url": ""
   },
   "database": {
@@ -16,10 +17,19 @@
       "name": "Base Tables Last Extracted",
       "type": "postgresql",
       "query": "SELECT extract(days from NOW()-extracted_at) as dage_siden FROM openstack.assert_base_tables_last_extracted_at order by extracted_at DESC LIMIT 1",
-      "threshold": 0.0,
+      "expected_value": 0.0,
       "operator": ">",
       "alert_title": "Data Extraction Forsinket",
-      "alert_message": "Der er gået {value} dage siden sidste base table extraction (grænse: {threshold} dag)."
+      "alert_message": "Der er gået {value} dage siden sidste base table extraction (forventet: {expected_value} dag)."
+    },
+    {
+      "name": "Todo API Check",
+      "type": "restapi",
+      "url": "https://jsonplaceholder.typicode.com/todos/5",
+      "field": "userId",
+      "expected_value": 1,
+      "alert_title": "Todo API Check Fejl",
+      "alert_message": "Felt '{field}' har værdi {value}, forventet var {expected_value}"
     }
   ]
 }

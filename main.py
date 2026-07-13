@@ -3,7 +3,7 @@ import json
 import logging
 from dotenv import load_dotenv
 from notifiers import MacNotifier, TeamsNotifier
-from checks import PostgreSQLCheck
+from checks import PostgreSQLCheck, RESTAPICheck
 
 # Set up logging
 logging.basicConfig(
@@ -45,11 +45,17 @@ def main():
         webhook_url = os.getenv("TEAMS_WEBHOOK_URL", notifier_config.get("teams_webhook_url"))
         if not webhook_url:
             logger.error("TEAMS_WEBHOOK_URL er ikke sat, falder tilbage til macOS-notifikationer.")
-            notifier = MacNotifier(sound_name=notifier_config.get("sound_name", "Glass"))
+            notifier = MacNotifier(
+                sound_name=notifier_config.get("sound_name", "Glass"),
+                timeout=notifier_config.get("timeout", 0)
+            )
         else:
             notifier = TeamsNotifier(webhook_url=webhook_url)
     else:
-        notifier = MacNotifier(sound_name=notifier_config.get("sound_name", "Glass"))
+        notifier = MacNotifier(
+            sound_name=notifier_config.get("sound_name", "Glass"),
+            timeout=notifier_config.get("timeout", 0)
+        )
         
     # Configure database settings
     db_config = config.get("database", {})
@@ -87,22 +93,32 @@ def main():
                 name=name,
                 db_config=db_params,
                 query=check_def["query"],
-                threshold=check_def.get("threshold", 0.0),
+                expected_value=check_def.get("expected_value", 0.0),
                 operator=check_def.get("operator", ">"),
                 alert_title_template=check_def.get("alert_title", "SQL Alarm: {name}"),
-                alert_message_template=check_def.get("alert_message", "Betingelse opfyldt! Værdi: {value}")
+                alert_message_template=check_def.get("alert_message", "Betingelse opfyldt! Værdi: {value} (Forventet: {expected_value})")
             )
-            
-            logger.info(f"Kører check: {name}")
-            result = check.run()
-            
-            if result.is_alert:
-                logger.warning(f"Alarm udløst for '{name}': {result.message}")
-                notifier.notify(result.title, result.message)
-            else:
-                logger.info(f"Check '{name}' er OK. Værdi: {result.value}")
+        elif check_type == "restapi":
+            check = RESTAPICheck(
+                name=name,
+                url=check_def["url"],
+                field=check_def["field"],
+                expected_value=check_def["expected_value"],
+                alert_title_template=check_def.get("alert_title", "API Alarm: {name}"),
+                alert_message_template=check_def.get("alert_message", "Felt '{field}' har værdi {value}, forventet var {expected_value}")
+            )
         else:
             logger.warning(f"Ukendt check type: {check_type}")
+            continue
+            
+        logger.info(f"Kører check: {name}")
+        result = check.run()
+        
+        if result.is_alert:
+            logger.warning(f"Alarm udløst for '{name}': {result.message}")
+            notifier.notify(result.title, result.message)
+        else:
+            logger.info(f"Check '{name}' er OK. Værdi: {result.value}")
 
 if __name__ == "__main__":
     main()
