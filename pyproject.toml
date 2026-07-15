@@ -5,6 +5,7 @@ description = "Script til at lave alarmer på mac os x"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "black>=26.5.1",
     "psycopg2-binary>=2.9.0",
     "python-dotenv>=1.0.0",
     "requests>=2.31.0",
@@ -20,3 +21,12 @@ package = false
 [dependency-groups]
 dev = ["pytest>=8.0.0"]
 
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"

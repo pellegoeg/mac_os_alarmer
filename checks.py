@@ -1,10 +1,12 @@
 import abc
 import logging
+from typing import Any
+
 import psycopg2
 import requests
-from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class CheckResult:
     def __init__(self, is_alert: bool, title: str, message: str, value: Any = None):
@@ -12,6 +14,7 @@ class CheckResult:
         self.title = title
         self.message = message
         self.value = value
+
 
 class BaseCheck(abc.ABC):
     def __init__(self, name: str):
@@ -22,16 +25,19 @@ class BaseCheck(abc.ABC):
         """Runs the check and returns a CheckResult."""
         pass
 
+
 class PostgreSQLCheck(BaseCheck):
     def __init__(
         self,
         name: str,
-        db_config: Dict[str, Any],
+        db_config: dict[str, Any],
         query: str,
         expected_value: float,
         operator: str = ">",
         alert_title_template: str = "SQL Alarm: {name}",
-        alert_message_template: str = "Betingelse opfyldt! Værdi: {value} (Forventet: {expected_value})"
+        alert_message_template: str = (
+            "Betingelse opfyldt! Værdi: {value} (Forventet: {expected_value})"
+        ),
     ):
         super().__init__(name)
         self.db_config = db_config
@@ -53,9 +59,9 @@ class PostgreSQLCheck(BaseCheck):
                         is_alert=False,
                         title=self.name,
                         message="Ingen data returneret af forespørgslen.",
-                        value=None
+                        value=None,
                     )
-                
+
                 # Fetch first column
                 val = row[0]
                 if val is None:
@@ -63,9 +69,9 @@ class PostgreSQLCheck(BaseCheck):
                         is_alert=False,
                         title=self.name,
                         message="Returneret værdi var NULL.",
-                        value=None
+                        value=None,
                     )
-                
+
                 # Compare value with expected_value
                 val_float = float(val)
                 is_alert = False
@@ -81,23 +87,30 @@ class PostgreSQLCheck(BaseCheck):
                     is_alert = val_float == self.expected_value
                 elif self.operator == "!=":
                     is_alert = val_float != self.expected_value
-                
-                title = self.alert_title_template.format(name=self.name, value=val, expected_value=self.expected_value)
-                message = self.alert_message_template.format(name=self.name, value=val, expected_value=self.expected_value)
-                
-                return CheckResult(is_alert=is_alert, title=title, message=message, value=val)
-                
+
+                title = self.alert_title_template.format(
+                    name=self.name, value=val, expected_value=self.expected_value
+                )
+                message = self.alert_message_template.format(
+                    name=self.name, value=val, expected_value=self.expected_value
+                )
+
+                return CheckResult(
+                    is_alert=is_alert, title=title, message=message, value=val
+                )
+
         except Exception as e:
             logger.error(f"Fejl under kørsel af PostgreSQLCheck '{self.name}': {e}")
             return CheckResult(
                 is_alert=True,
                 title=f"Fejl i Check: {self.name}",
                 message=f"Der opstod en databasefejl: {str(e)}",
-                value=None
+                value=None,
             )
         finally:
             if conn:
                 conn.close()
+
 
 class RESTAPICheck(BaseCheck):
     def __init__(
@@ -107,7 +120,9 @@ class RESTAPICheck(BaseCheck):
         field: str,
         expected_value: Any,
         alert_title_template: str = "API Alarm: {name}",
-        alert_message_template: str = "Felt '{field}' har værdi {value}, forventet var {expected_value}"
+        alert_message_template: str = (
+            "Felt '{field}' har værdi {value}, forventet var {expected_value}"
+        ),
     ):
         super().__init__(name)
         self.url = url
@@ -121,39 +136,36 @@ class RESTAPICheck(BaseCheck):
             response = requests.get(self.url, timeout=10)
             response.raise_for_status()
             data = response.json()
-            
+
             actual_value = data.get(self.field)
             if actual_value is None:
                 return CheckResult(
                     is_alert=True,
                     title=self.alert_title_template.format(name=self.name),
                     message=f"Felt '{self.field}' ikke fundet i response: {data}",
-                    value=None
+                    value=None,
                 )
-            
+
             is_alert = actual_value != self.expected_value
             title = self.alert_title_template.format(name=self.name)
             message = self.alert_message_template.format(
                 name=self.name,
                 field=self.field,
                 value=actual_value,
-                expected_value=self.expected_value
+                expected_value=self.expected_value,
             )
-            
+
             return CheckResult(
-                is_alert=is_alert,
-                title=title,
-                message=message,
-                value=actual_value
+                is_alert=is_alert, title=title, message=message, value=actual_value
             )
-            
+
         except requests.exceptions.RequestException as e:
             logger.error(f"Fejl under kørsel af RESTAPICheck '{self.name}': {e}")
             return CheckResult(
                 is_alert=True,
                 title=f"Fejl i Check: {self.name}",
                 message=f"Der opstod en HTTP-fejl: {str(e)}",
-                value=None
+                value=None,
             )
         except Exception as e:
             logger.error(f"Fejl under kørsel af RESTAPICheck '{self.name}': {e}")
@@ -161,5 +173,5 @@ class RESTAPICheck(BaseCheck):
                 is_alert=True,
                 title=f"Fejl i Check: {self.name}",
                 message=f"Der opstod en fejl: {str(e)}",
-                value=None
+                value=None,
             )
